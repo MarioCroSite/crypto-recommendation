@@ -76,7 +76,7 @@ public class IngestionService {
         var lockSymbol = lockSymbol(fileInfo.symbol());
 
         // save to ingestion repository
-        //.save()
+        //ingestionDetailsRepository.save()
 
         // statements ordered by timestamp descending
         var statements = getStatementsFromFile(fileInfo);
@@ -88,11 +88,11 @@ public class IngestionService {
             throw new RuntimeException("Aggregated data for symbol %s has conflicts. Ingestion failed.".formatted(fileInfo.symbol()));
         }
 
-        // Store rates in the database
-        //ratesRepository.saveAll(consolidationResult.consolidatedRates());
+        // Store symbol prices in the database
+        symbolPriceRepository.saveAll(aggregatedResult.aggregatedSymbolPrices());
 
-        // Store/update statistics in the database
-        //cryptoStatsRepository.saveCryptoStats(timeWindowStats);
+        // Save / update summary in the database
+        symbolPriceSummaryRepository.save(symbolPriceSummary);
 
         // Update ingestion information in the database
         //ingestionDetailsRepository.ingestionSuccessful(ingestionDetails, consolidationResult.consolidatedRates().size());

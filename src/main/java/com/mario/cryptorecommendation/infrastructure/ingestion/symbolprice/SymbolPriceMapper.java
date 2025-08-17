@@ -10,4 +10,8 @@ public interface SymbolPriceMapper {
     @Mapping(target = "symbol", source = "id.symbol")
     @Mapping(target = "createdAt", source = "id.createdAt")
     SymbolPrice toDomain(SymbolPriceEntity symbolPriceEntity);
+
+    @Mapping(target = "id.symbol", source = "symbol")
+    @Mapping(target = "id.createdAt", source = "createdAt")
+    SymbolPriceEntity toEntity(SymbolPrice domain);
 }
