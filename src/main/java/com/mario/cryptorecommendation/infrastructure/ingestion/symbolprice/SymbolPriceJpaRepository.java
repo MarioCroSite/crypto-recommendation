@@ -8,7 +8,7 @@ import java.time.Instant;
 import java.util.List;
 
 @Repository
-public interface SymbolPriceJpaRepository extends CrudRepository<SymbolPriceEntity, Long> {
+public interface SymbolPriceJpaRepository extends CrudRepository<SymbolPriceEntity, SymbolPriceId> {
 
     @Query("SELECT sp FROM SymbolPriceEntity sp WHERE sp.id.symbol = :symbol AND sp.id.createdAt BETWEEN :start AND :end")
     List<SymbolPriceEntity> findBySymbolAndDateTimeRange(String symbol, Instant start, Instant end);

@@ -1,13 +1,16 @@
 package com.mario.cryptorecommendation.domain.ingestion;
 
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatorRequest;
+import com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatorResponse;
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.SymbolPriceAggregator;
+import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceEvaluator;
 import com.mario.cryptorecommendation.domain.ingestion.symbolconfig.SymbolConfigRepository;
 import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLock;
 import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLockRepository;
 import com.mario.cryptorecommendation.domain.ingestion.reader.FileReaderFactory;
 import com.mario.cryptorecommendation.domain.ingestion.reader.Statement;
 import com.mario.cryptorecommendation.domain.ingestion.symbolprice.SymbolPriceRepository;
+import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceSummaryRepository;
 import com.mario.cryptorecommendation.domain.utils.file.FileInfo;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,6 +21,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatedStatus.CONFLICT;
 import static com.mario.cryptorecommendation.domain.utils.file.FileInfoUtil.getFilesFromDirectoryLocation;
 
 @Service
@@ -32,13 +36,17 @@ public class IngestionService {
     private final FileReaderFactory fileReaderFactory;
     private final SymbolPriceAggregator symbolPriceAggregator;
     private final IngestionMapper ingestionMapper;
+    private final SymbolPriceEvaluator symbolPriceEvaluator;
+    private final SymbolPriceSummaryRepository symbolPriceSummaryRepository;
 
     public IngestionService(SymbolLockRepository symbolLockRepository,
                             FileReaderFactory fileReaderFactory,
                             SymbolConfigRepository symbolConfigRepository,
                             SymbolPriceRepository symbolPriceRepository,
                             SymbolPriceAggregator symbolPriceAggregator,
-                            IngestionMapper ingestionMapper) {
+                            IngestionMapper ingestionMapper,
+                            SymbolPriceEvaluator symbolPriceEvaluator,
+                            SymbolPriceSummaryRepository symbolPriceSummaryRepository) {
         this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         this.symbolLockRepository = symbolLockRepository;
         this.fileReaderFactory = fileReaderFactory;
@@ -46,6 +54,8 @@ public class IngestionService {
         this.symbolPriceRepository = symbolPriceRepository;
         this.symbolPriceAggregator = symbolPriceAggregator;
         this.ingestionMapper = ingestionMapper;
+        this.symbolPriceEvaluator = symbolPriceEvaluator;
+        this.symbolPriceSummaryRepository = symbolPriceSummaryRepository;
     }
 
     public void startIngestion(String directoryLocation) {
@@ -70,21 +80,25 @@ public class IngestionService {
 
         // statements ordered by timestamp descending
         var statements = getStatementsFromFile(fileInfo);
-        var period = getPeriod(statements.getFirst(), fileInfo);
-        var existingSymbolPrices = symbolPriceRepository.findBySymbolAndDateTimeRange(fileInfo.symbol(), period.start(), period.end());
+        var aggregatedResult = getAggregatedData(statements, fileInfo);
 
-        var newSymbolPrices = ingestionMapper.toSymbolPriceList(statements);
-        var aggregatedResult = symbolPriceAggregator.aggregate(AggregatorRequest.builder()
-                        .newSymbolPrices(newSymbolPrices)
-                        .existingSymbolPrices(existingSymbolPrices)
-                        .period(period)
-                .build());
+        var symbolPriceSummary = symbolPriceEvaluator.evaluate(aggregatedResult);
+        if (symbolPriceSummary.status() == CONFLICT) {
+            symbolPriceSummaryRepository.save(symbolPriceSummary);
+            throw new RuntimeException("Aggregated data for symbol %s has conflicts. Ingestion failed.".formatted(fileInfo.symbol()));
+        }
 
+        // Store rates in the database
+        //ratesRepository.saveAll(consolidationResult.consolidatedRates());
+
+        // Store/update statistics in the database
+        //cryptoStatsRepository.saveCryptoStats(timeWindowStats);
+
+        // Update ingestion information in the database
+        //ingestionDetailsRepository.ingestionSuccessful(ingestionDetails, consolidationResult.consolidatedRates().size());
 
         unlockSymbol(fileInfo.symbol());
     }
-
-
 
 
     private SymbolLock lockSymbol(String symbol) {
@@ -120,6 +134,18 @@ public class IngestionService {
 
         var startTime = symbolConfig.timeFrame().findStartFrame(lastStatement.timestamp());
         return Period.of(startTime, lastStatement.timestamp());
+    }
+
+    private AggregatorResponse getAggregatedData(List<Statement> statements, FileInfo fileInfo) {
+        var period = getPeriod(statements.getFirst(), fileInfo);
+        var existingSymbolPrices = symbolPriceRepository.findBySymbolAndDateTimeRange(fileInfo.symbol(), period.start(), period.end());
+        var newSymbolPrices = ingestionMapper.toSymbolPriceList(statements);
+
+        return symbolPriceAggregator.aggregate(AggregatorRequest.builder()
+                .newSymbolPrices(newSymbolPrices)
+                .existingSymbolPrices(existingSymbolPrices)
+                .period(period)
+                .build());
     }
 
     private void unlockSymbol(String symbol) {

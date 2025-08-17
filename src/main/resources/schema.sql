@@ -1,3 +1,16 @@
+CREATE TABLE IF NOT EXISTS symbol_price_summary (
+    symbol VARCHAR(20) NOT NULL,
+    period_start TIMESTAMP(6) NOT NULL,
+    period_end TIMESTAMP(6) NOT NULL,
+    status VARCHAR(20) NOT NULL CHECK (status IN ('CONFLICT', 'INCOMPLETE', 'COMPLETE')),
+    min_price DECIMAL(18, 6) NOT NULL,
+    max_price DECIMAL(18, 6) NOT NULL,
+    oldest_price DECIMAL(18, 6) NOT NULL,
+    newest_price DECIMAL(18, 6) NOT NULL,
+    normalized_range DECIMAL(18, 6) NOT NULL,
+    PRIMARY KEY (symbol, period_start)
+);
+
 CREATE TABLE IF NOT EXISTS symbol_price (
     symbol VARCHAR(20) NOT NULL,
     created_at TIMESTAMP(6) NOT NULL,

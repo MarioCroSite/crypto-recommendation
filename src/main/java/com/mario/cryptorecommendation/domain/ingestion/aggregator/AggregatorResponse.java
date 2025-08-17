@@ -7,7 +7,7 @@ import java.util.List;
 
 public record AggregatorResponse(
         List<SymbolPrice> aggregatedSymbolPrices,
-        AggregatedStatus aggregatedStatus,
+        AggregatedStatus status,
         Period period,
         String symbol
 ) {

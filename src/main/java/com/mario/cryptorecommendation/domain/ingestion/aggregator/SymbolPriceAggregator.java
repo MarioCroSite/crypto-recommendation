@@ -29,7 +29,7 @@ public class SymbolPriceAggregator {
         }
 
         var aggregatedSymbolPrices = mergeSymbolPrices(request.existingSymbolPrices(), request.newSymbolPrices());
-        var status = determineAggregatedStatus(aggregatedSymbolPrices, period, symbol);
+        var status = getAggregateStatus(aggregatedSymbolPrices, period, symbol);
 
         return new AggregatorResponse(aggregatedSymbolPrices, status, period, symbol);
     }
@@ -59,7 +59,7 @@ public class SymbolPriceAggregator {
                 .toList();
     }
 
-    private AggregatedStatus determineAggregatedStatus(
+    private AggregatedStatus getAggregateStatus(
             List<SymbolPrice> aggregatedSymbolPrices, Period period, String symbol) {
 
         var requiredDates = period.getAllDates();
