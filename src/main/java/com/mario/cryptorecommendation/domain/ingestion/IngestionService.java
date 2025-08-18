@@ -6,6 +6,7 @@ import com.mario.cryptorecommendation.domain.ingestion.aggregator.SymbolPriceAgg
 import com.mario.cryptorecommendation.domain.ingestion.ingestioninfo.IngestionInfo;
 import com.mario.cryptorecommendation.domain.ingestion.ingestioninfo.IngestionInfoRepository;
 import com.mario.cryptorecommendation.domain.ingestion.symbollock.FailedToLockSymbol;
+import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.DataConflictException;
 import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceEvaluator;
 import com.mario.cryptorecommendation.domain.ingestion.symbolconfig.SymbolConfigRepository;
 import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLockRepository;
@@ -73,12 +74,29 @@ public class IngestionService {
     private void ingest(FileInfo fileInfo) {
         var ingestionInfo = ingestionStarted(fileInfo);
 
-        // Validate we can ingest the symbol and lock it
-        lockSymbol(fileInfo.symbol());
+        try {
+            // Validate we can ingest the symbol and lock it
+            lockSymbol(fileInfo.symbol());
 
-        // save to ingestion repository
-        ingestionInfoRepository.save(ingestionInfo);
+            // save to ingestion repository
+            ingestionInfoRepository.save(ingestionInfo);
 
+            var aggregatedResult = processIngestion(fileInfo);
+
+            // Update ingestion information in the database
+            ingestionInfoRepository.ingestionSuccessful(ingestionInfo, aggregatedResult.aggregatedSymbolPrices().size());
+        } catch (FailedToLockSymbol ex) {
+            log.error("Failed to lock symbol {}. Ingestion failed from file path {}.", fileInfo.symbol(), fileInfo.filePath(), ex);
+            ingestionInfoRepository.ingestionFailed(ingestionInfo);
+        } catch (Exception ex) {
+            log.error("Unexpected error during ingestion for symbol {}: {}", fileInfo.symbol(), ex.getMessage(), ex);
+            ingestionInfoRepository.ingestionFailed(ingestionInfo);
+        } finally {
+            releaseLockSymbol(fileInfo.symbol());
+        }
+    }
+
+    private AggregatorResponse processIngestion(FileInfo fileInfo) {
         // statements ordered by timestamp descending
         var statements = getStatementsFromFile(fileInfo);
         var aggregatedResult = getAggregatedData(statements, fileInfo);
@@ -86,7 +104,7 @@ public class IngestionService {
         var symbolPriceSummary = symbolPriceEvaluator.evaluate(aggregatedResult);
         if (symbolPriceSummary.status() == CONFLICT) {
             symbolPriceSummaryRepository.save(symbolPriceSummary);
-            throw new RuntimeException("Aggregated data for symbol %s has conflicts. Ingestion failed.".formatted(fileInfo.symbol()));
+            throw new DataConflictException("Aggregated data for symbol %s has conflicts. Ingestion failed.".formatted(fileInfo.symbol()));
         }
 
         // Store symbol prices in the database
@@ -95,10 +113,7 @@ public class IngestionService {
         // Save / update summary in the database
         symbolPriceSummaryRepository.save(symbolPriceSummary);
 
-        // Update ingestion information in the database
-        ingestionInfoRepository.ingestionSuccessful(ingestionInfo, aggregatedResult.aggregatedSymbolPrices().size());
-
-        unlockSymbol(fileInfo.symbol());
+        return aggregatedResult;
     }
 
     private IngestionInfo ingestionStarted(FileInfo fileInfo) {
@@ -158,8 +173,8 @@ public class IngestionService {
         return Period.of(startTime, lastStatement.timestamp());
     }
 
-    private void unlockSymbol(String symbol) {
-        var unlockSymbol= symbolLockRepository.unlockSymbol(symbol);
+    private void releaseLockSymbol(String symbol) {
+        var unlockSymbol = symbolLockRepository.unlockSymbol(symbol);
         if (!unlockSymbol) {
             throw new FailedToLockSymbol("Failed to unlock symbol %s.".formatted(symbol));
         }

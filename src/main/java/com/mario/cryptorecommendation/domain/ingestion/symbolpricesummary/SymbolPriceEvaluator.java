@@ -2,6 +2,7 @@ package com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary;
 
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatorResponse;
 import com.mario.cryptorecommendation.domain.ingestion.symbolprice.SymbolPrice;
+import com.mario.cryptorecommendation.domain.utils.NormalizedRangeCalculator;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -9,13 +10,10 @@ import java.util.List;
 
 import static com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatedStatus.CONFLICT;
 import static java.math.BigDecimal.ZERO;
-import static java.math.RoundingMode.HALF_UP;
 import static java.util.Comparator.comparing;
 
 @Component
 public class SymbolPriceEvaluator {
-
-    private static final int PRECISION = 6;
 
     public SymbolPriceSummary evaluate(AggregatorResponse result) {
         var period = result.period();
@@ -32,7 +30,7 @@ public class SymbolPriceEvaluator {
         var maxPrice = getMaxPrice(aggregatedSymbolPrices);
         var oldestPrice = getOldestPrice(aggregatedSymbolPrices);
         var newestPrice = getNewestPrice(aggregatedSymbolPrices);
-        var normalizedRange = calculateNormalizedRange(minPrice, maxPrice);
+        var normalizedRange = NormalizedRangeCalculator.calculate(minPrice, maxPrice);
 
         return SymbolPriceSummary.of(result.symbol(), period, status, minPrice, maxPrice,
                 oldestPrice, newestPrice, normalizedRange);
@@ -64,13 +62,5 @@ public class SymbolPriceEvaluator {
                 .max(comparing(SymbolPrice::createdAt))
                 .map(SymbolPrice::price)
                 .orElse(ZERO);
-    }
-
-    private BigDecimal calculateNormalizedRange(BigDecimal minPrice, BigDecimal maxPrice) {
-        if (minPrice.compareTo(ZERO) <= 0) {
-            return ZERO;
-        }
-
-        return maxPrice.subtract(minPrice).divide(minPrice, PRECISION, HALF_UP);
     }
 }

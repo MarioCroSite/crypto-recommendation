@@ -5,6 +5,11 @@ import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.Symbol
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+import java.util.Optional;
+
+import static java.util.Comparator.comparing;
+
 @Repository
 @RequiredArgsConstructor
 public class SymbolPriceSummaryAdapter implements SymbolPriceSummaryRepository {
@@ -16,5 +21,18 @@ public class SymbolPriceSummaryAdapter implements SymbolPriceSummaryRepository {
     public SymbolPriceSummary save(SymbolPriceSummary symbolPriceSummary) {
         var summary = symbolPriceSummaryJpaRepository.save(mapper.toEntity(symbolPriceSummary));
         return mapper.toDomain(summary);
+    }
+
+    @Override
+    public List<SymbolPriceSummary> findLatestSummaryPrices() {
+        return symbolPriceSummaryJpaRepository.findLatestSummaryPrices().stream()
+                .map(mapper::toDomain)
+                .sorted(comparing(SymbolPriceSummary::normalizedRange).reversed())
+                .toList();
+    }
+
+    @Override
+    public Optional<SymbolPriceSummary> findLatestSummaryPricesBySymbol(String symbol) {
+        return symbolPriceSummaryJpaRepository.findLatestSummaryPricesBySymbol(symbol).map(mapper::toDomain);
     }
 }

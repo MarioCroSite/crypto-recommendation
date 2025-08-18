@@ -12,4 +12,7 @@ public interface SymbolPriceJpaRepository extends JpaRepository<SymbolPriceEntit
 
     @Query("SELECT sp FROM SymbolPriceEntity sp WHERE sp.id.symbol = :symbol AND sp.id.createdAt BETWEEN :start AND :end")
     List<SymbolPriceEntity> findBySymbolAndDateTimeRange(String symbol, Instant start, Instant end);
+
+    @Query("SELECT sp FROM SymbolPriceEntity sp WHERE sp.id.createdAt BETWEEN :start AND :end")
+    List<SymbolPriceEntity> findByDateTimeBetween(Instant start, Instant end);
 }
