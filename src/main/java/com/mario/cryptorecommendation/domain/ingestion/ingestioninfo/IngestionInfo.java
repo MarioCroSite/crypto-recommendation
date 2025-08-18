@@ -1,4 +1,4 @@
-package com.mario.cryptorecommendation.domain.ingestion;
+package com.mario.cryptorecommendation.domain.ingestion.ingestioninfo;
 
 import com.mario.cryptorecommendation.domain.utils.file.ExtensionType;
 import lombok.Builder;
@@ -6,13 +6,15 @@ import lombok.Builder;
 import java.time.Instant;
 
 @Builder(toBuilder = true)
-public record IngestionDetails(
+public record IngestionInfo(
         String ingestionId,
         String filePath,
         String symbol,
         ExtensionType extensionType,
         Instant startTime,
-        Instant endTime
+        Instant endTime,
+        int numberOfRecords,
+        IngestionStatus status
 ) {
 
 }

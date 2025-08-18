@@ -11,6 +11,17 @@ CREATE TABLE IF NOT EXISTS symbol_price_summary (
     PRIMARY KEY (symbol, period_start)
 );
 
+CREATE TABLE IF NOT EXISTS ingestion_info (
+    ingestion_id VARCHAR(36) PRIMARY KEY,
+    file_path VARCHAR(255) NOT NULL,
+    symbol VARCHAR(20) NOT NULL,
+    extension_type VARCHAR(10) NOT NULL,
+    start_time TIMESTAMP NOT NULL,
+    end_time TIMESTAMP NULL,
+    number_of_records INT NOT NULL,
+    status VARCHAR(255) NOT NULL CHECK (status IN ('IN_PROGRESS', 'COMPLETED', 'FAILED'))
+);
+
 CREATE TABLE IF NOT EXISTS symbol_price (
     symbol VARCHAR(20) NOT NULL,
     created_at TIMESTAMP(6) NOT NULL,

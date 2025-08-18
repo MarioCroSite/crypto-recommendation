@@ -3,9 +3,11 @@ package com.mario.cryptorecommendation.domain.ingestion;
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatorRequest;
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatorResponse;
 import com.mario.cryptorecommendation.domain.ingestion.aggregator.SymbolPriceAggregator;
+import com.mario.cryptorecommendation.domain.ingestion.ingestioninfo.IngestionInfo;
+import com.mario.cryptorecommendation.domain.ingestion.ingestioninfo.IngestionInfoRepository;
+import com.mario.cryptorecommendation.domain.ingestion.symbollock.FailedToLockSymbol;
 import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceEvaluator;
 import com.mario.cryptorecommendation.domain.ingestion.symbolconfig.SymbolConfigRepository;
-import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLock;
 import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLockRepository;
 import com.mario.cryptorecommendation.domain.ingestion.reader.FileReaderFactory;
 import com.mario.cryptorecommendation.domain.ingestion.reader.Statement;
@@ -21,6 +23,7 @@ import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import static com.mario.cryptorecommendation.domain.ingestion.ingestioninfo.IngestionStatus.IN_PROGRESS;
 import static com.mario.cryptorecommendation.domain.ingestion.aggregator.AggregatedStatus.CONFLICT;
 import static com.mario.cryptorecommendation.domain.utils.file.FileInfoUtil.getFilesFromDirectoryLocation;
 
@@ -38,6 +41,7 @@ public class IngestionService {
     private final IngestionMapper ingestionMapper;
     private final SymbolPriceEvaluator symbolPriceEvaluator;
     private final SymbolPriceSummaryRepository symbolPriceSummaryRepository;
+    private final IngestionInfoRepository ingestionInfoRepository;
 
     public IngestionService(SymbolLockRepository symbolLockRepository,
                             FileReaderFactory fileReaderFactory,
@@ -46,7 +50,8 @@ public class IngestionService {
                             SymbolPriceAggregator symbolPriceAggregator,
                             IngestionMapper ingestionMapper,
                             SymbolPriceEvaluator symbolPriceEvaluator,
-                            SymbolPriceSummaryRepository symbolPriceSummaryRepository) {
+                            SymbolPriceSummaryRepository symbolPriceSummaryRepository,
+                            IngestionInfoRepository ingestionInfoRepository) {
         this.executorService = Executors.newFixedThreadPool(THREAD_POOL_SIZE);
         this.symbolLockRepository = symbolLockRepository;
         this.fileReaderFactory = fileReaderFactory;
@@ -56,6 +61,7 @@ public class IngestionService {
         this.ingestionMapper = ingestionMapper;
         this.symbolPriceEvaluator = symbolPriceEvaluator;
         this.symbolPriceSummaryRepository = symbolPriceSummaryRepository;
+        this.ingestionInfoRepository = ingestionInfoRepository;
     }
 
     public void startIngestion(String directoryLocation) {
@@ -65,18 +71,13 @@ public class IngestionService {
 
 
     private void ingest(FileInfo fileInfo) {
-        var ingestionDetails = IngestionDetails.builder()
-                .ingestionId(UUID.randomUUID().toString())
-                .filePath(fileInfo.filePath())
-                .symbol(fileInfo.symbol())
-                .extensionType(fileInfo.extensionType())
-                .startTime(Instant.now())
-                .build();
+        var ingestionInfo = ingestionStarted(fileInfo);
 
-        var lockSymbol = lockSymbol(fileInfo.symbol());
+        // Validate we can ingest the symbol and lock it
+        lockSymbol(fileInfo.symbol());
 
         // save to ingestion repository
-        //ingestionDetailsRepository.save()
+        ingestionInfoRepository.save(ingestionInfo);
 
         // statements ordered by timestamp descending
         var statements = getStatementsFromFile(fileInfo);
@@ -95,13 +96,24 @@ public class IngestionService {
         symbolPriceSummaryRepository.save(symbolPriceSummary);
 
         // Update ingestion information in the database
-        //ingestionDetailsRepository.ingestionSuccessful(ingestionDetails, consolidationResult.consolidatedRates().size());
+        ingestionInfoRepository.ingestionSuccessful(ingestionInfo, aggregatedResult.aggregatedSymbolPrices().size());
 
         unlockSymbol(fileInfo.symbol());
     }
 
+    private IngestionInfo ingestionStarted(FileInfo fileInfo) {
+        return IngestionInfo.builder()
+                .ingestionId(UUID.randomUUID().toString())
+                .filePath(fileInfo.filePath())
+                .symbol(fileInfo.symbol())
+                .extensionType(fileInfo.extensionType())
+                .startTime(Instant.now())
+                .numberOfRecords(0)
+                .status(IN_PROGRESS)
+                .build();
+    }
 
-    private SymbolLock lockSymbol(String symbol) {
+    private void lockSymbol(String symbol) {
         var symbolOpt = symbolLockRepository.findBySymbol(symbol);
         if (symbolOpt.isEmpty()) {
             throw new FailedToLockSymbol("Symbol %s is not available in our system.".formatted(symbol));
@@ -115,8 +127,6 @@ public class IngestionService {
         if (!lockSymbol) {
             throw new FailedToLockSymbol("Failed to lock symbol %s.".formatted(symbol));
         }
-
-        return symbolOpt.get();
     }
 
     private List<Statement> getStatementsFromFile(FileInfo fileInfo) {
@@ -126,14 +136,6 @@ public class IngestionService {
             throw new RuntimeException("No statements found in file: " + fileInfo.filePath());
         }
         return statements;
-    }
-
-    private Period getPeriod(Statement lastStatement, FileInfo fileInfo) {
-        var symbolConfig = symbolConfigRepository.findBySymbol(fileInfo.symbol())
-                .orElseThrow(() -> new RuntimeException("Symbol configuration not found for: " + fileInfo.symbol()));
-
-        var startTime = symbolConfig.timeFrame().findStartFrame(lastStatement.timestamp());
-        return Period.of(startTime, lastStatement.timestamp());
     }
 
     private AggregatorResponse getAggregatedData(List<Statement> statements, FileInfo fileInfo) {
@@ -146,6 +148,14 @@ public class IngestionService {
                 .existingSymbolPrices(existingSymbolPrices)
                 .period(period)
                 .build());
+    }
+
+    private Period getPeriod(Statement lastStatement, FileInfo fileInfo) {
+        var symbolConfig = symbolConfigRepository.findBySymbol(fileInfo.symbol())
+                .orElseThrow(() -> new RuntimeException("Symbol configuration not found for: " + fileInfo.symbol()));
+
+        var startTime = symbolConfig.timeFrame().findStartFrame(lastStatement.timestamp());
+        return Period.of(startTime, lastStatement.timestamp());
     }
 
     private void unlockSymbol(String symbol) {
