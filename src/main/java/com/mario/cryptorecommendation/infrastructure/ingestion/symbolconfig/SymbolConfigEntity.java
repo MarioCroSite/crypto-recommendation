@@ -4,6 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -20,14 +22,16 @@ import java.time.Instant;
 public class SymbolConfigEntity {
 
     @Id
+    @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
-    @Column(name = "time_frame")
+    @Enumerated(EnumType.STRING)
+    @Column(name = "time_frame", nullable = false, length = 20)
     private TimeFrame timeFrame;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 }

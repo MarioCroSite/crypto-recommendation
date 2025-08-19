@@ -19,8 +19,9 @@ import java.time.Instant;
 @Setter
 public class SymbolPriceId implements Serializable {
 
+    @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
-    @Column(name = "created_at")
+    @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

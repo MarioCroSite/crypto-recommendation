@@ -20,9 +20,10 @@ import java.time.Instant;
 public class SymbolLockEntity {
 
     @Id
+    @Column(name = "symbol", nullable = false, length = 20)
     private String symbol;
 
-    @Column(name = "locked")
+    @Column(name = "locked", nullable = false)
     private boolean locked;
 
     @Column(name = "locked_at")
