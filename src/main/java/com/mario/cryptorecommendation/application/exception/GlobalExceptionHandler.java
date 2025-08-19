@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.format.DateTimeParseException;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
 import static org.springframework.http.HttpStatus.INTERNAL_SERVER_ERROR;
 
 @Slf4j
@@ -22,14 +23,16 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(SymbolNotSupportedException.class)
-    public ResponseEntity<String> handleSymbolNotSupportedException(SymbolNotSupportedException ex) {
+    public ResponseEntity<ApiError> handleSymbolNotSupportedException(SymbolNotSupportedException ex) {
         log.error("SymbolNotSupportedException: Symbol not supported", ex);
-        return  ResponseEntity.badRequest().body("Symbol not supported");
+        var error = ApiError.toApiError("SYMBOL_NOT_SUPPORTED", BAD_REQUEST, ex.getMessage());
+        return ResponseEntity.badRequest().body(error);
     }
 
     @ExceptionHandler(DateTimeParseException.class)
-    public ResponseEntity<String> handleDateTimeParseException(DateTimeParseException e) {
-        return ResponseEntity.badRequest()
-                .body("Invalid date format. Please use dd-MM-yyyy");
+    public ResponseEntity<ApiError> handleDateTimeParseException(DateTimeParseException e) {
+        log.error("DateTimeParseException: Invalid date format", e);
+        var error = ApiError.toApiError("INVALID_DATE_FORMAT", BAD_REQUEST, "Invalid date format. Please use dd-MM-yyyy");
+        return ResponseEntity.badRequest().body(error);
     }
 }
