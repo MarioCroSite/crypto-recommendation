@@ -5,6 +5,7 @@ import com.mario.cryptorecommendation.domain.ingestion.symbollock.SymbolLockRepo
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Component
@@ -21,7 +22,7 @@ public class SymbolLockRepositoryAdapter implements SymbolLockRepository {
 
     @Override
     public boolean lockSymbol(String symbol) {
-        var locked = symbolLockJpaRepository.lockCurrency(symbol);
+        var locked = symbolLockJpaRepository.lockCurrency(symbol, Instant.now());
         return locked > 0;
     }
 

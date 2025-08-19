@@ -6,6 +6,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+
 @Repository
 public interface SymbolLockJpaRepository extends JpaRepository<SymbolLockEntity, String> {
 
@@ -16,9 +18,9 @@ public interface SymbolLockJpaRepository extends JpaRepository<SymbolLockEntity,
      * @return the number of records updated (0 if symbol was already locked, 1 if lock was successful)
      */
     @Modifying
-    @Query("UPDATE SymbolLockEntity sl SET sl.locked = true, sl.lockedAt = CURRENT_TIMESTAMP WHERE sl.symbol = :symbol AND sl.locked = false")
+    @Query("UPDATE SymbolLockEntity sl SET sl.locked = true, sl.lockedAt = :timestamp WHERE sl.symbol = :symbol AND sl.locked = false")
     @Transactional
-    int lockCurrency(String symbol);
+    int lockCurrency(String symbol, Instant timestamp);
 
     /**
      * Unlocks a symbol by its symbol code.

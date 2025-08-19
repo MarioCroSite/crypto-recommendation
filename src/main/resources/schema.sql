@@ -39,6 +39,6 @@ CREATE TABLE IF NOT EXISTS symbol_config (
 CREATE TABLE IF NOT EXISTS symbol_lock (
     symbol VARCHAR(20) PRIMARY KEY,
     locked BOOLEAN NOT NULL,
-    locked_at TIMESTAMP(6),
+    locked_at TIMESTAMP(6)
 );
 
