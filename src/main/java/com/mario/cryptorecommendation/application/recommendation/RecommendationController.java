@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import java.time.LocalDate;
 import java.util.List;
 
+import static org.springframework.http.HttpStatus.NOT_FOUND;
 import static org.springframework.http.ResponseEntity.ok;
 
 @Slf4j
@@ -44,6 +45,6 @@ public class RecommendationController {
        var latestSymbolPrice =  recommendationService.getLatestSymbolPriceForSymbol(symbol);
 
         return latestSymbolPrice.map(symbolPrice -> ResponseEntity.ok(mapper.toDto(symbolPrice)))
-                .orElseGet(() -> ResponseEntity.status(404).build());
+                .orElseGet(() -> ResponseEntity.status(NOT_FOUND).build());
     }
 }
