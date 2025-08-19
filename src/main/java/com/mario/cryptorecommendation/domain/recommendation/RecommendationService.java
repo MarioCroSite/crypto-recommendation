@@ -26,7 +26,8 @@ public class RecommendationService {
     }
 
     public String getSymbolWithHighestNormalizedRangeInDay(LocalDate date) {
-        return symbolPriceRepository.findSymbolWithHighestNormalizedRangeInDay(date);
+        return symbolPriceRepository.findSymbolWithHighestNormalizedRangeInDay(date)
+                .orElseThrow(() -> new NoDataFoundException("No symbol prices found for the given day: %s".formatted(date)));
     }
 
     public Optional<SymbolPriceSummary> getLatestSymbolPriceForSymbol(String symbol) {

@@ -40,7 +40,7 @@ public class RecommendationController {
     }
 
     // Exposes an endpoint that will return the oldest/newest/min/max values for a requested crypto
-    @GetMapping("/stats/{symbol}/info")
+    @GetMapping("/summary/{symbol}/info")
     public ResponseEntity<SymbolPriceSummaryDto> getCryptoStats(@PathVariable String symbol) {
        var latestSymbolPrice =  recommendationService.getLatestSymbolPriceForSymbol(symbol);
 

@@ -13,6 +13,7 @@ import java.time.LocalDate;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
@@ -47,13 +48,13 @@ public class SymbolPriceRepositoryAdapter implements SymbolPriceRepository {
     }
 
     @Override
-    public String findSymbolWithHighestNormalizedRangeInDay(LocalDate date) {
+    public Optional<String> findSymbolWithHighestNormalizedRangeInDay(LocalDate date) {
         var startDate = date.atStartOfDay(UTC).toInstant();
         var endDate = date.atTime(MAX).atZone(UTC).toInstant();
 
         var symbolPricesByDate = symbolPriceJpaRepository.findByDateTimeBetween(startDate, endDate);
         if(symbolPricesByDate.isEmpty()) {
-            throw new IllegalArgumentException("No symbol prices found for the given day: %s".formatted(date));
+            return Optional.empty();
         }
 
         // Group rates by symbol and calculate normalization rate for each symbol
@@ -63,8 +64,7 @@ public class SymbolPriceRepositoryAdapter implements SymbolPriceRepository {
                 .stream()
                 .map(this::mapToSymbolAndNormalizedRange)
                 .max(Comparator.comparing(Pair::getSecond))
-                .map(Pair::getFirst)
-                .orElse("No symbol found");
+                .map(Pair::getFirst);
     }
 
     private Pair<String, BigDecimal> mapToSymbolAndNormalizedRange(Map.Entry<String, List<SymbolPriceEntity>> stringListEntry) {
