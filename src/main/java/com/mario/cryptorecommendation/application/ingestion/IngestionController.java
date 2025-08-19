@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class IngestionController {
 
-    private IngestionService ingestionService;
+    private final IngestionService ingestionService;
 
     @GetMapping("/start")
     public ResponseEntity<Void> startIngestion(@RequestParam("directory") String directoryLocation) {
