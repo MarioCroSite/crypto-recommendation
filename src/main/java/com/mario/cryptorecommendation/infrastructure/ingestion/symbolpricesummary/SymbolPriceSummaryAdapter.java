@@ -3,6 +3,7 @@ package com.mario.cryptorecommendation.infrastructure.ingestion.symbolpricesumma
 import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceSummary;
 import com.mario.cryptorecommendation.domain.ingestion.symbolpricesummary.SymbolPriceSummaryRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -17,6 +18,11 @@ public class SymbolPriceSummaryAdapter implements SymbolPriceSummaryRepository {
     private final SymbolPriceSummaryJpaRepository symbolPriceSummaryJpaRepository;
     private final SymbolPriceSummaryMapper mapper;
 
+    @CacheEvict(value = {
+            "latestSummaryPricesByNormalizedRangeDesc",
+            "symbolWithHighestNormalizedRangeInDay",
+            "latestSymbolPriceForSymbol"},
+            allEntries = true)
     @Override
     public SymbolPriceSummary save(SymbolPriceSummary symbolPriceSummary) {
         var summary = symbolPriceSummaryJpaRepository.save(mapper.toEntity(symbolPriceSummary));
@@ -24,7 +30,7 @@ public class SymbolPriceSummaryAdapter implements SymbolPriceSummaryRepository {
     }
 
     @Override
-    public List<SymbolPriceSummary> findLatestSummaryPrices() {
+    public List<SymbolPriceSummary> findLatestSummaryPricesOrderedByNormalizedRangeDesc() {
         return symbolPriceSummaryJpaRepository.findLatestSummaryPrices().stream()
                 .map(mapper::toDomain)
                 .sorted(comparing(SymbolPriceSummary::normalizedRange).reversed())

@@ -20,16 +20,18 @@ public class RecommendationService {
     private final SymbolPriceSummaryRepository symbolPriceSummaryRepository;
     private final SymbolConfigRepository symbolConfigRepository;
 
-    @Cacheable("summaryPrices")
+    @Cacheable(value = "latestSummaryPricesByNormalizedRangeDesc", unless = "#result.isEmpty()")
     public List<SymbolPriceSummary> getLatestSummaryPrices() {
-        return symbolPriceSummaryRepository.findLatestSummaryPrices();
+        return symbolPriceSummaryRepository.findLatestSummaryPricesOrderedByNormalizedRangeDesc();
     }
 
+    @Cacheable(value = "symbolWithHighestNormalizedRangeInDay", key = "#date.toString()")
     public String getSymbolWithHighestNormalizedRangeInDay(LocalDate date) {
         return symbolPriceRepository.findSymbolWithHighestNormalizedRangeInDay(date)
                 .orElseThrow(() -> new NoDataFoundException("No symbol prices found for the given day: %s".formatted(date)));
     }
 
+    @Cacheable(value = "latestSymbolPriceForSymbol", key = "#symbol")
     public Optional<SymbolPriceSummary> getLatestSymbolPriceForSymbol(String symbol) {
         var symbolConfig = symbolConfigRepository.findBySymbol(symbol)
                 .orElseThrow(() -> new SymbolNotSupportedException("Symbol not supported: " + symbol));

@@ -4,6 +4,7 @@ import com.mario.cryptorecommendation.domain.ingestion.symbolprice.SymbolPrice;
 import com.mario.cryptorecommendation.domain.ingestion.symbolprice.SymbolPriceRepository;
 import com.mario.cryptorecommendation.domain.utils.NormalizedRangeCalculator;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 
@@ -35,6 +36,11 @@ public class SymbolPriceRepositoryAdapter implements SymbolPriceRepository {
                 .toList();
     }
 
+    @CacheEvict(value = {
+            "latestSummaryPricesByNormalizedRangeDesc",
+            "symbolWithHighestNormalizedRangeInDay",
+            "latestSymbolPriceForSymbol"},
+            allEntries = true)
     @Override
     public List<SymbolPrice> saveAll(List<SymbolPrice> symbolPrices) {
         var symbolPriceEntities = symbolPrices.stream()
@@ -53,7 +59,7 @@ public class SymbolPriceRepositoryAdapter implements SymbolPriceRepository {
         var endDate = date.atTime(MAX).atZone(UTC).toInstant();
 
         var symbolPricesByDate = symbolPriceJpaRepository.findByDateTimeBetween(startDate, endDate);
-        if(symbolPricesByDate.isEmpty()) {
+        if (symbolPricesByDate.isEmpty()) {
             return Optional.empty();
         }
 
