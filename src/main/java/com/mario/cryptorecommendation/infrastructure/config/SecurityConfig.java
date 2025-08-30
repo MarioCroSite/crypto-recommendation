@@ -1,4 +1,4 @@
-package com.mario.cryptorecommendation.infrastructure.ingestion.config;
+package com.mario.cryptorecommendation.infrastructure.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

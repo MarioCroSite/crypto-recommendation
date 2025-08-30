@@ -1,4 +1,4 @@
-package com.mario.cryptorecommendation.infrastructure.ingestion.config;
+package com.mario.cryptorecommendation.infrastructure.config;
 
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;

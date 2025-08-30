@@ -1,4 +1,4 @@
-package com.mario.cryptorecommendation.infrastructure.ingestion.config;
+package com.mario.cryptorecommendation.infrastructure.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bucket4j.Bandwidth;

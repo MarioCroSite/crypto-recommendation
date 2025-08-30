@@ -35,7 +35,7 @@ public class RecommendationController {
     // Exposes an endpoint that will return the crypto with the highest normalized range for a specific day
     @GetMapping("/normalized-range/highest")
     public ResponseEntity<String> getSymbolWithHighestNormalizedRangeInDay(
-            @RequestParam @DateTimeFormat(pattern = "dd-MM-yyyy") LocalDate date) {
+            @RequestParam @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate date) {
         return ok(recommendationService.getSymbolWithHighestNormalizedRangeInDay(date));
     }
 
