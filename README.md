@@ -24,6 +24,90 @@ This project follows **Hexagonal Architecture** (also known as Ports and Adapter
 - JPA Entities & Database
 - External adapters
 
+```mermaid
+graph TB
+    subgraph "Application Layer"
+        A1[Ingestion Controller<br/>POST /ingest]
+        A2[Recommendation Controller<br/>GET /normalized-range]
+        A3[Global Exception Handler<br/>Error Responses]
+        A4[DTO Mappers<br/>Domain ↔ API]
+        A5[Input Validation<br/>@NotBlank, @Validated]
+    end
+    
+    subgraph "Domain Layer"
+        B1[Ingestion Service<br/>File Processing]
+        B2[Recommendation Service<br/>Price Analysis]
+        C1[Crypto Rate<br/>Price Data Model]
+        C2[Symbol Price<br/>Individual Prices]
+        C3[Symbol Config<br/>Time Frames]
+        C4[Symbol Lock<br/>Concurrency Control]
+        C5[Price Aggregator<br/>Data Consolidation]
+        C6[Price Evaluator<br/>Summary Creation]
+        C7[Normalized Range<br/>Price Analysis]
+        C8[File Readers<br/>CSV/TXT Interface & Impl]
+    end
+    
+    subgraph "Infrastructure Layer (Ports)"
+        D1[Symbol Price Repository<br/>JPA Implementation]
+        D2[Symbol Config Repository<br/>Configuration Storage]
+        D3[Symbol Lock Repository<br/>Lock Management]
+        D4[Price Summary Repository<br/>Aggregated Data]
+        D5[MapStruct Mappers<br/>Entity ↔ Domain]
+        D6[Spring Security<br/>Authentication]
+        D7[H2 Database<br/>In-Memory Storage]
+        D8[Rate Limiting Filter<br/>Bucket4j]
+    end
+    
+    %% Application to Domain connections
+    A1 --> B1
+    A2 --> B2
+    A4 --> C1
+    A4 --> C2
+    A4 --> C3
+    A4 --> C4
+    
+    %% Domain internal connections
+    B1 --> C1
+    B1 --> C2
+    B1 --> C3
+    B1 --> C4
+    B1 --> C5
+    B1 --> C8
+    B2 --> C6
+    B2 --> C7
+    
+    %% Domain to Infrastructure connections
+    C1 --> D1
+    C2 --> D1
+    C3 --> D2
+    C4 --> D3
+    C5 --> D4
+    C6 --> D4
+    C7 --> D4
+    
+    %% Infrastructure internal connections
+    D1 --> D5
+    D2 --> D5
+    D3 --> D5
+    D4 --> D5
+    D5 --> D7
+    
+    %% Security and Rate Limiting
+    D6 --> A1
+    D6 --> A2
+    D8 --> A1
+    D8 --> A2
+    
+    %% Styling
+    classDef applicationLayer fill:#f3e5f5,stroke:#4a148c,stroke-width:2px
+    classDef domainLayer fill:#e8f5e8,stroke:#1b5e20,stroke-width:2px
+    classDef infrastructureLayer fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    
+    class A1,A2,A3,A4,A5 applicationLayer
+    class B1,B2,C1,C2,C3,C4,C5,C6,C7,C8 domainLayer
+    class D1,D2,D3,D4,D5,D6,D7,D8 infrastructureLayer
+```
+
 ### Key Benefits of Hexagonal Architecture
 
 - **Dependency Inversion**: Domain layer doesn't depend on infrastructure
