@@ -146,3 +146,18 @@ graph TB
 - Java 21 or higher
 - Gradle 8.0 or higher
 
+## API Endpoints
+
+### Ingestion
+- `GET /api/v1/ingestion/start?directory={path}` - Process cryptocurrency data files
+- `GET /h2-console` - Database management interface (H2 Console)
+
+### Recommendations
+- `GET /api/v1/recommendation/normalized-range` - Get all symbols with normalized price ranges (descending)
+- `GET /api/v1/recommendation/normalized-range/highest?date={yyyy-MM-dd}` - Get highest performing symbol for specific date
+- `GET /api/v1/recommendation/summary/{symbol}/info` - Get detailed stats for specific cryptocurrency
+
+### Authentication
+- All endpoints require basic authentication
+- Default credentials: `user` / `admin`
+
