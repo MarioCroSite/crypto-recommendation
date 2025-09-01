@@ -1,8 +1,5 @@
-package com.mario.cryptorecommendation.domain.reader;
+package com.mario.cryptorecommendation.domain.ingestion.reader;
 
-import com.mario.cryptorecommendation.domain.ingestion.reader.FileReadFailedException;
-import com.mario.cryptorecommendation.domain.ingestion.reader.FileReaderCsv;
-import com.mario.cryptorecommendation.domain.ingestion.reader.Statement;
 import com.mario.cryptorecommendation.domain.utils.file.FileInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -24,7 +21,7 @@ import static java.util.Objects.requireNonNull;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 
-public class FileReaderCsvTest {
+class FileReaderCsvTest {
 
     private FileReaderCsv csvReader;
 

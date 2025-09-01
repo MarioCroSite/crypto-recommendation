@@ -12,7 +12,7 @@ import java.time.Instant;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mapstruct.factory.Mappers.getMapper;
 
-public class RecommendationDtoMapperTest {
+class RecommendationDtoMapperTest {
 
     private final RecommendationDtoMapper mapper = getMapper(RecommendationDtoMapper.class);
 

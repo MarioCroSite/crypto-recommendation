@@ -1,6 +1,5 @@
-package com.mario.cryptorecommendation.domain.reader;
+package com.mario.cryptorecommendation.domain.ingestion.reader;
 
-import com.mario.cryptorecommendation.domain.ingestion.reader.FileReaderTxt;
 import com.mario.cryptorecommendation.domain.utils.file.FileInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -8,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static com.mario.cryptorecommendation.domain.utils.file.ExtensionType.TXT;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
-public class FileReaderTxtTest {
+class FileReaderTxtTest {
 
     private FileReaderTxt txtReader;
 

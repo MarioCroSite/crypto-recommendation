@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @WebMvcTest(value = RecommendationController.class,
         excludeFilters = @ComponentScan.Filter(type = FilterType.ASSIGNABLE_TYPE,
                 classes = RateLimitingFilter.class))
-public class RecommendationControllerTest {
+class RecommendationControllerTest {
 
     @Autowired
     private MockMvc mockMvc;

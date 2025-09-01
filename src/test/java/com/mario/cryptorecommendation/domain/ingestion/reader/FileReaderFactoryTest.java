@@ -1,7 +1,5 @@
-package com.mario.cryptorecommendation.domain.reader;
+package com.mario.cryptorecommendation.domain.ingestion.reader;
 
-import com.mario.cryptorecommendation.domain.ingestion.reader.FileReader;
-import com.mario.cryptorecommendation.domain.ingestion.reader.FileReaderFactory;
 import com.mario.cryptorecommendation.domain.utils.file.ExtensionType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -13,7 +11,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 
 @ExtendWith(MockitoExtension.class)
-public class FileReaderFactoryTest {
+class FileReaderFactoryTest {
 
     @Mock
     private FileReader csvReader;
