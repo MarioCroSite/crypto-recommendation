@@ -7,32 +7,22 @@ A Spring Boot application that provides cryptocurrency price analysis and recomm
 This project follows **Hexagonal Architecture** (also known as Ports and Adapters pattern), which provides a clean separation of concerns and makes the system more maintainable and testable.
 
 ### Architecture Layers
-┌─────────────────────────────────────────────────────────────┐
-│ Application Layer │
-│ ┌─────────────────┐ ┌─────────────────────────────────┐ │
-│ │ Controllers │ │ DTOs & Mappers │ │
-│ └─────────────────┘ └─────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ Domain Layer │
-│ ┌─────────────────┐ ┌─────────────────────────────────┐ │
-│ │ Services │ │ Domain Models │ │
-│ │ Aggregators │ │ (Entities) │ │
-│ │ Evaluators │ │ │ │
-│ └─────────────────┘ └─────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-│
-▼
-┌─────────────────────────────────────────────────────────────┐
-│ Infrastructure Layer │
-│ ┌─────────────────┐ ┌─────────────────────────────────┐ │
-│ │ Repositories │ │ JPA Entities │ │
-│ │ Mappers │ │ & Database │ │
-│ │ Adapters │ │ │ │
-│ └─────────────────┘ └─────────────────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
+
+**Application Layer**
+- Controllers (REST endpoints)
+- DTOs & Mappers
+- Exception handling
+
+**Domain Layer**
+- Services (Business logic)
+- Aggregators (Price aggregation)
+- Evaluators (Data evaluation)
+- Domain Models (Entities)
+
+**Infrastructure Layer**
+- Repositories (Data access)
+- JPA Entities & Database
+- External adapters
 
 ### Key Benefits of Hexagonal Architecture
 
